@@ -19,8 +19,6 @@
 #    Documention for the setup of these agents:
 #    https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/v2-windows
 
-trigger: none # disable builds for branches
-
 jobs:
 # The affected tests jobs are unconditional for speed, as most PRs have one or
 # more affected tests: https://github.com/web-platform-tests/wpt/issues/13936.
@@ -156,6 +154,42 @@ jobs:
     displayName: 'Publish results'
     inputs:
       artifactName: 'infrastructure'
+    condition: succeededOrFailed()
+  - powershell: |
+      $hostFile = "$env:systemroot\System32\drivers\etc\hosts"
+      Copy-Item -Path "$hostFile.back" -Destination $hostFile -Force
+      taskkill /f /im MicrosoftEdge*
+      taskkill /f /im MicrosoftWebDriver.exe
+    displayName: 'Restore hosts file and cleanup test machine'
+    condition: always()
+    errorActionPreference: silentlyContinue
+    ignoreLASTEXITCODE: true
+
+- job: all_edge
+  displayName: 'all tests (Edge)'
+  #condition: eq(variables['Build.Reason'], 'Schedule')
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/foolip/azure-full-edge')
+  strategy:
+    parallel: 4 # chosen to make runtime ~2h
+  timeoutInMinutes: 360
+  pool:
+    name: 'Hosted Windows Client'
+  steps:
+  - template: tools/ci/azure/system_info.yml
+  - template: tools/ci/azure/checkout.yml
+  - template: tools/ci/azure/install_python.yml
+  - template: tools/ci/azure/pip_install.yml
+    parameters:
+      packages: virtualenv
+  - template: tools/ci/azure/install_certs.yml
+  - template: tools/ci/azure/update_hosts.yml
+  - template: tools/ci/azure/update_manifest.yml
+  - script: python ./wpt run --no-manifest-update --no-restart-on-unexpected --no-fail-on-unexpected --install-fonts --this-chunk=$(System.JobPositionInPhase) --total-chunks=$(System.TotalJobsInPhase) --chunk-type hash --log-wptreport $(Build.ArtifactStagingDirectory)/wpt_report_$(System.JobPositionInPhase).json edge_webdriver dom
+    displayName: 'Run tests'
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish results'
+    inputs:
+      artifactName: 'results-edge'
     condition: succeededOrFailed()
   - powershell: |
       $hostFile = "$env:systemroot\System32\drivers\etc\hosts"
