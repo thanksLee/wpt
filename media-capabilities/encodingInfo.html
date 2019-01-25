@@ -289,6 +289,18 @@ promise_test(t => {
   });
 }, "Test that encodingInfo returns a valid MediaCapabilitiesInfo objects");
 
+promise_test(t => {
+  return navigator.mediaCapabilities.encodingInfo({
+    type: 'transmission',
+    video: minimalVideoConfiguration,
+    audio: minimalAudioConfiguration,
+  }).then(ability => {
+    assert_equals(typeof ability.supported, "boolean");
+    assert_equals(typeof ability.smooth, "boolean");
+    assert_equals(typeof ability.powerEfficient, "boolean");
+  });
+}, "Test that encodingInfo returns a valid MediaCapabilitiesInfo objects");
+
 async_test(t => {
   var validTypes = [ 'record', 'transmission' ];
   var invalidTypes = [ undefined, null, '', 'foobar', 'mse', 'MediaSource',
