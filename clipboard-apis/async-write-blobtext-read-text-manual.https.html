@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>Async Clipboard write (dt/text) -> readText tests</title>
+<title>Async Clipboard write (Blob/text) -> readText tests</title>
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
 <script>
 promise_test(async t => {
-  const input = "Clipboard write (dt/text) -> readText test data";
-  const dt = new DataTransfer();
-  dt.items.add(input, "text/plain");
+  const inputMessage = "Clipboard write (Blob/text) -> readText test data";
+  const input = new Blob([inputMessage], {type: 'text/plain'});
 
-  await navigator.clipboard.write(dt);
+  await navigator.clipboard.write(input);
   const output = await navigator.clipboard.readText();
 
-  assert_equals(output, input);
+  assert_equals(output, inputMessage);
 }, "Verify write and read clipboard (DataTransfer/text)");
 </script>
 Note: This is a manual test because it writes/reads to the shared system
