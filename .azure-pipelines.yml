@@ -170,7 +170,7 @@ jobs:
   #condition: eq(variables['Build.Reason'], 'Schedule')
   condition: eq(variables['Build.SourceBranch'], 'refs/heads/foolip/azure-full-edge')
   strategy:
-    parallel: 4 # chosen to make runtime ~2h
+    parallel: 24 # chosen to make runtime ~2h
   timeoutInMinutes: 360
   pool:
     name: 'Hosted Windows Client'
